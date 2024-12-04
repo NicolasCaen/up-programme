@@ -1,6 +1,8 @@
 <?php
 namespace UpProgramme\Meta;
 
+require_once 'filter-data.php';
+
 abstract class MetaBase {
     protected $object_type = 'post'; // CEci est toujours post pour tous les cpt, sinon ca peut etre comment, user,...
     protected $meta_fields = [];
@@ -17,24 +19,61 @@ abstract class MetaBase {
                 'single' => true,
                 'type' => 'string',
                 'default' => '',
-            ];
-
-            // Configuration du REST API et de l'affichage
-            if (isset($args['get_callback']) || isset($args['update_callback'])) {
-                $default_args['show_in_rest'] = [
+                'show_in_rest' => [
                     'schema' => [
                         'type' => 'string'
-                    ],
-                    'prepare_callback' => $args['get_callback'] ?? null,
-                    'get_callback' => $args['get_callback'] ?? null,
-                ];
+                    ]
+                ]
+            ];
+
+            // Assurer la cohérence entre le type et la valeur par défaut
+            if (isset($args['type'])) {
+                $default_args['type'] = $args['type'];
+                $default_args['show_in_rest']['schema']['type'] = $args['type'];
                 
-                if (isset($args['update_callback'])) {
-                    $default_args['show_in_rest']['update_callback'] = $args['update_callback'];
+                // Ajuster la valeur par défaut selon le type
+                switch ($args['type']) {
+                    case 'integer':
+                        $default_args['default'] = 0;
+                        break;
+                    case 'number':
+                        $default_args['default'] = 0.0;
+                        break;
+                    case 'boolean':
+                        $default_args['default'] = false;
+                        break;
+                    case 'array':
+                        $default_args['default'] = [];
+                        break;
+                    case 'object':
+                        $default_args['default'] = new \stdClass();
+                        break;
+                    default: // string
+                        $default_args['default'] = '';
                 }
-            } else {
-                $default_args['show_in_rest'] = true;
             }
+
+            // Création d'une fonction de callback pour le formatage
+            $format_callback = function($value) use ($meta_key) {
+                if (empty($value)) {
+                    return $value;
+                }
+                
+                $filter_name = 'format_' . strtolower($meta_key);
+                if (has_filter($filter_name)) {
+                    return apply_filters($filter_name, $value, $value, get_the_ID());
+                }
+                return $value;
+            };
+
+            // Configuration du REST API
+            $default_args['show_in_rest'] = [
+                'schema' => [
+                    'type' => $args['type'] ?? 'string'
+                ],
+                'prepare_callback' => $format_callback,
+                'get_callback' => $format_callback
+            ];
 
             register_meta(
                 $this->object_type,
@@ -50,10 +89,10 @@ abstract class MetaBase {
      * Enregistre les filtres de formatage pour les metas
      */
     protected function register_meta_format_filters() {
+        // On enregistre un filtre pour chaque meta_field, qu'il ait un callback ou non
         foreach ($this->meta_fields as $meta_key => $args) {
-            if (isset($args['get_callback'])) {
-                $this->add_meta_format_filter($meta_key, $args['get_callback']);
-            }
+            $callback = isset($args['get_callback']) ? $args['get_callback'] : null;
+            $this->add_meta_format_filter($meta_key, $callback);
         }
     }
 
@@ -63,7 +102,7 @@ abstract class MetaBase {
      * @param string $meta_key La clé de la meta à formater
      * @param callable $callback La fonction de callback à appliquer
      */
-    protected function add_meta_format_filter($meta_key, $callback) {
+    protected function add_meta_format_filter($meta_key, $callback = null) {
         add_filter('get_post_metadata', function($value, $object_id, $current_meta_key, $single) 
             use ($meta_key, $callback) {
             // Si la valeur est déjà définie ou si ce n'est pas la bonne meta_key, on retourne la valeur
@@ -81,7 +120,16 @@ abstract class MetaBase {
                     $meta_key
                 ));
                 
-                return $callback($raw_value, null, null);
+                // Si un callback spécifique est défini, on l'applique d'abord
+                $formatted_value = $callback ? $callback($raw_value, null, null) : $raw_value;
+                
+                // Applique ensuite le filtre spécifique s'il existe
+                $filter_name = 'format_' . strtolower($meta_key);
+                if (has_filter($filter_name)) {
+                    return apply_filters($filter_name, $formatted_value, $raw_value, $object_id);
+                }
+                
+                return $formatted_value;
             }
             
             return $value;
