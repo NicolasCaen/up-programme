@@ -2,17 +2,50 @@
 namespace UpProgramme\Meta;
 
 require_once 'filter-data.php';
-
+/**
+ * Classe abstraite pour gérer les métadonnées personnalisées
+ * 
+ * Cette classe fournit une base pour l'enregistrement et la gestion des métadonnées
+ * avec support pour le formatage personnalisé via des filtres WordPress.
+ * 
+ * @package UpProgramme
+ * @subpackage Meta
+ * @since 1.0.0
+ */
 abstract class MetaBase {
-    protected $object_type = 'post'; // CEci est toujours post pour tous les cpt, sinon ca peut etre comment, user,...
-    protected $meta_fields = [];
-    protected $post_type = 'post'; 
+    /**
+     * Type d'objet pour les métadonnées (post, comment, user, term)
+     * @var string
+     */
+    protected $object_type = 'post';
 
+    /**
+     * Liste des champs meta avec leurs configurations
+     * @var array
+     */
+    protected $meta_fields = [];
+
+    /**
+     * Type de post pour les métadonnées
+     * @var string
+     */
+    protected $post_type = 'post';
+
+    /**
+     * Initialise les hooks WordPress pour les métadonnées
+     * 
+     * @return void
+     */
     public function register() {
         add_action('init', [$this, 'register_meta_fields']);
         $this->register_meta_format_filters();
     }
 
+    /**
+     * Enregistre les champs meta dans WordPress
+     * 
+     * @return void
+     */
     public function register_meta_fields() {
         foreach ($this->meta_fields as $meta_key => $args) {
             $default_args = [
@@ -87,6 +120,8 @@ abstract class MetaBase {
 
     /**
      * Enregistre les filtres de formatage pour les metas
+     * 
+     * @return void
      */
     protected function register_meta_format_filters() {
         // On enregistre un filtre pour chaque meta_field, qu'il ait un callback ou non
@@ -97,10 +132,14 @@ abstract class MetaBase {
     }
 
     /**
-     * Applique un callback sur une meta spécifique pour
+     * Ajoute un filtre de formatage pour une meta spécifique
+     * 
+     * Cette méthode garantit qu'un filtre n'est ajouté qu'une seule fois
+     * et permet le formatage personnalisé des valeurs de meta
      * 
      * @param string $meta_key La clé de la meta à formater
-     * @param callable $callback La fonction de callback à appliquer
+     * @param callable|null $callback Fonction de callback optionnelle pour le formatage
+     * @return void
      */
     protected function add_meta_format_filter($meta_key, $callback = null) {
         add_filter('get_post_metadata', function($value, $object_id, $current_meta_key, $single) 
@@ -136,7 +175,15 @@ abstract class MetaBase {
         }, 10, 4);
     }
 
+    /**
+     * Définit les champs meta pour cette instance
+     * 
+     * @param array $fields Tableau des champs meta avec leurs configurations
+     * @return void
+     */
     protected function set_meta_fields(array $fields): void {
         $this->meta_fields = $fields;
     }
+
+
 }
