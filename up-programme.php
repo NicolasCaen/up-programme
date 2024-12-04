@@ -22,7 +22,11 @@ function up_debug($message) {
         error_log(print_r($message, true));
     }
 }
-
+add_shortcode('debug_meta', function($atts) {
+    $key = isset($atts['key']) ? $atts['key'] : '';
+    $value = get_post_meta(get_the_ID(), $key, true);
+    return "Meta '$key': " . esc_html($value);
+});
 // Autoloader amélioré
 spl_autoload_register(function ($class) {
     $prefix = 'UpProgramme\\';
