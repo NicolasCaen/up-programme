@@ -14,6 +14,8 @@ class Init {
             Taxonomies\Taxprogram::class,
             Taxonomies\PropertyType::class,
             Taxonomies\Level::class,
+            Meta\LotMeta::class,
+            Meta\ProgramMeta::class,
             Admin\Admin::class,
         ];
     }

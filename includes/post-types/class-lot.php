@@ -25,7 +25,7 @@ class Lot {
             ],
             'public' => true,
             'has_archive' => true,
-            'supports' => ['title', 'editor', 'thumbnail'],
+            'supports' => ['title', 'editor', 'thumbnail', 'custom-fields'],
             'menu_position' => 7,
             'menu_icon' => 'dashicons-admin-multisite',
             'show_in_rest' => true,
@@ -39,7 +39,7 @@ class Lot {
             'lot_details',
             'Détails du Lot',
             [$this, 'render_meta_box'],
-            'up_program',
+            'up_program_lot',
             'normal',
             'high'
         );
@@ -48,18 +48,18 @@ class Lot {
     public function render_meta_box($post) {
         wp_nonce_field(basename(__FILE__), 'lot_nonce');
         
-        $surface = get_post_meta($post->ID, '_up_surface', true);
-        $price = get_post_meta($post->ID, '_up_price', true);
-        $rooms = get_post_meta($post->ID, '_up_rooms', true);
-        $program = get_post_meta($post->ID, '_up_program_id', true);
-        $pdf_url = get_post_meta($post->ID, '_up_pdf_file', true);
-
-        // Récupérer tous les programmes immobiliers
-        $programs = get_posts([
-            'post_type' => 'real_estate_program',
-            'posts_per_page' => -1,
-        ]);
+        $surface = get_post_meta($post->ID, 'up_surface', true);
+        $price = get_post_meta($post->ID, 'up_price', true);
+        $rooms = get_post_meta($post->ID, 'up_rooms', true);
+        $pdf_url = get_post_meta($post->ID, 'up_pdf_file', true);
+        $lot_number = get_post_meta($post->ID, 'up_lot_number', true);
+        
         ?>
+        <p>
+            <label for="up_lot_number">Numéro de lot :</label>
+            <input type="text" id="up_lot_number" name="up_lot_number" value="<?php echo esc_attr($lot_number); ?>" />
+        </p>
+
         <p>
             <label for="up_surface">Surface (m²) :</label>
             <input type="number" id="up_surface" name="up_surface" value="<?php echo esc_attr($surface); ?>" />
@@ -73,18 +73,6 @@ class Lot {
         <p>
             <label for="up_rooms">Nombre de pièces :</label>
             <input type="number" id="up_rooms" name="up_rooms" value="<?php echo esc_attr($rooms); ?>" />
-        </p>
-
-        <p>
-            <label for="up_program_id">Programme immobilier :</label>
-            <select id="up_program_id" name="up_program_id">
-                <option value="">Sélectionner un programme</option>
-                <?php foreach ($programs as $prog) : ?>
-                    <option value="<?php echo $prog->ID; ?>" <?php selected($program, $prog->ID); ?>>
-                        <?php echo esc_html($prog->post_title); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
         </p>
 
         <p>
@@ -109,12 +97,12 @@ class Lot {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
         if (!current_user_can('edit_post', $post_id)) return;
 
-        $fields = ['surface', 'price', 'rooms', 'program_id'];
+        $fields = ['surface', 'price', 'rooms', 'program_id', 'lot_number'];
         foreach ($fields as $field) {
             if (isset($_POST['up_' . $field])) {
                 update_post_meta(
                     $post_id,
-                    '_up_' . $field,
+                    'up_' . $field,
                     sanitize_text_field($_POST['up_' . $field])
                 );
             }
@@ -132,14 +120,14 @@ class Lot {
     }
 
     private function delete_pdf($post_id) {
-        $old_pdf_url = get_post_meta($post_id, '_up_pdf_file', true);
+        $old_pdf_url = get_post_meta($post_id, 'up_pdf_file', true);
         if ($old_pdf_url) {
             $upload_dir = wp_upload_dir();
             $file_path = str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $old_pdf_url);
             if (file_exists($file_path)) {
                 unlink($file_path);
             }
-            delete_post_meta($post_id, '_up_pdf_file');
+            delete_post_meta($post_id, 'up_pdf_file');
         }
     }
 
@@ -162,7 +150,7 @@ class Lot {
             return;
         }
 
-        update_post_meta($post_id, '_up_pdf_file', $upload['url']);
+        update_post_meta($post_id, 'up_pdf_file', $upload['url']);
     }
 
     public function custom_upload_dir($dirs) {
