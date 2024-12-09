@@ -1,6 +1,6 @@
 <?php
 namespace UpProgramme\Admin\FilterColumns;
-use WP_Query;
+
 abstract class BaseFilter {
     protected $post_type;
     protected $taxonomies = [];
@@ -16,9 +16,6 @@ abstract class BaseFilter {
         add_action('restrict_manage_posts', [$this, 'add_admin_filters']);
         add_filter('parse_query', [$this, 'filter_posts_by_taxonomies']);
 
-        // Ajout des actions AJAX
-        // add_action('admin_enqueue_scripts', [$this, 'enqueue_filter_scripts']);
-        // add_action('wp_ajax_update_admin_filter', [$this, 'handle_ajax_filter']);
     }
 
     /**
@@ -44,10 +41,25 @@ abstract class BaseFilter {
                 'hierarchical' => true,
                 'depth' => 3,
                 'show_count' => true,
-                'hide_empty' => false,
+                'hide_empty' => true,
                 'class' => 'taxonomy-filter'
             ]);
         }
+
+        // Ajouter un bouton de réinitialisation
+        echo '<button type="button" id="reset-filters" class="button">' . __('Réinitialiser', 'up-programme') . '</button>';
+
+        // Ajouter le script JavaScript pour gérer le bouton de réinitialisation
+        ?>
+        <script type="text/javascript">
+        jQuery(document).ready(function($) {
+            $('#reset-filters').on('click', function() {
+                $('.taxonomy-filter').val('-1'); // Réinitialiser les filtres à la valeur par défaut
+                $('#post-query-submit').click(); // Soumettre le formulaire pour recharger la page
+            });
+        });
+        </script>
+        <?php
     }
 
     /**
@@ -121,7 +133,6 @@ abstract class BaseFilter {
         // Debug
         add_action('all_admin_notices', function() use ($query) {
             echo '<div class="notice notice-info">';
-            echo '<p>Requête SQL finale : ' . $query->request . '</p>';
             echo '<p>Nombre de résultats : ' . $query->found_posts . '</p>';
             echo '</div>';
         });
@@ -129,26 +140,4 @@ abstract class BaseFilter {
         return $query;
     }
 
-    /**
-     * Récupère les résultats filtrés
-     */
-    private function get_filtered_results($tax_params) {
-        $args = [
-            'post_type' => $this->post_type,
-            'posts_per_page' => 20,
-            'tax_query' => []
-        ];
-
-        foreach ($tax_params as $taxonomy => $term_id) {
-            if (!empty($term_id) && $term_id != '-1') {
-                $args['tax_query'][] = [
-                    'taxonomy' => $taxonomy,
-                    'field' => 'term_id',
-                    'terms' => $term_id
-                ];
-            }
-        }
-
-        return new \WP_Query($args);
-    }
 }
