@@ -1,0 +1,16 @@
+.up-flex-row {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 1rem 2rem;
+    
+}
+.up-flex-row:nth-of-type(2n) {
+ background-color: #f0f0f0;
+}
+.up-flex-row__container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}

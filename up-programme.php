@@ -57,6 +57,7 @@ spl_autoload_register(function ($class) {
                 return 'post-types';
             case 'filters':
                 return 'admin/filters';
+ 
             default:
                 return $part;
         }

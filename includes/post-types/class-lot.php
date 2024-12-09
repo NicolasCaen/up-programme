@@ -49,12 +49,20 @@ class Lot {
         wp_nonce_field(basename(__FILE__), 'lot_nonce');
         
         $surface = get_post_meta($post->ID, 'up_surface', true);
-        $price = get_post_meta($post->ID, 'up_price', true);
-        $rooms = get_post_meta($post->ID, 'up_rooms', true);
+        $price = get_post_meta($post->ID,   'up_price', true);
+        $price55 = get_post_meta($post->ID, 'up_price55', true);
+        $price20 = get_post_meta($post->ID, 'up_price20', true);
+        $price10 = get_post_meta($post->ID, 'up_price10', true);
         $pdf_url = get_post_meta($post->ID, 'up_pdf_file', true);
         $lot_number = get_post_meta($post->ID, 'up_lot_number', true);
-        
+        $origin_id = get_post_meta($post->ID, 'up_origin_id', true);
         ?>
+         <div class="up-flex-row__container">
+         <div class="up-flex-row">
+            <p>
+                <label for="up_origin_id">ID source :</label>
+                <input type="text" id="up_origin_id" name="up_origin_id" value="<?php echo esc_attr($origin_id); ?>" />
+            </p>
         <p>
             <label for="up_lot_number">Numéro de lot :</label>
             <input type="text" id="up_lot_number" name="up_lot_number" value="<?php echo esc_attr($lot_number); ?>" />
@@ -64,17 +72,30 @@ class Lot {
             <label for="up_surface">Surface (m²) :</label>
             <input type="number" id="up_surface" name="up_surface" value="<?php echo esc_attr($surface); ?>" />
         </p>
+        </div>
+        <div class="up-flex-row">
 
-        <p>
+            <p>
             <label for="up_price">Prix :</label>
             <input type="number" id="up_price" name="up_price" value="<?php echo esc_attr($price); ?>" />
         </p>
 
         <p>
-            <label for="up_rooms">Nombre de pièces :</label>
-            <input type="number" id="up_rooms" name="up_rooms" value="<?php echo esc_attr($rooms); ?>" />
+            <label for="up_price55">Prix TVA 5.5% :</label>
+            <input type="number" id="up_price55" name="up_price55" value="<?php echo esc_attr($price55); ?>" />
         </p>
 
+        <p>
+            <label for="up_price20">Prix TVA 20% :</label>
+            <input type="number" id="up_price20" name="up_price20" value="<?php echo esc_attr($price20); ?>" />
+        </p>
+
+        <p>
+            <label for="up_price10">Prix TVA 10% :</label>
+            <input type="number" id="up_price10" name="up_price10" value="<?php echo esc_attr($price10); ?>" />
+            </p>
+        </div>
+        <div class="up-flex-row">
         <p>
             <label for="up_pdf_file">Fichier PDF :</label>
             <input type="file" id="up_pdf_file" name="up_pdf_file" accept=".pdf" />
@@ -86,6 +107,8 @@ class Lot {
                 </label>
             <?php endif; ?>
         </p>
+        </div>
+        </div>
         <?php
     }
 
@@ -97,7 +120,7 @@ class Lot {
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
         if (!current_user_can('edit_post', $post_id)) return;
 
-        $fields = ['surface', 'price', 'rooms', 'program_id', 'lot_number'];
+        $fields = ['surface', 'price', 'price55', 'price20', 'price10', 'program_id', 'lot_number', 'origin_id'];
         foreach ($fields as $field) {
             if (isset($_POST['up_' . $field])) {
                 update_post_meta(
