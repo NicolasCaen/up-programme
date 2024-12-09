@@ -5,6 +5,8 @@ class Admin {
     public function register() {
         add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
         add_action('admin_menu', [$this, 'add_admin_pages']);
+
+        FilterColumns::getInstance();
     }
 
     public function enqueue_scripts() {

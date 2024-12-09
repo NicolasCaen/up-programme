@@ -17,11 +17,14 @@ class FilterColumns {
     }
 
     public function __construct() {
-        add_action('admin_init', [$this, 'init']);
+        if (is_admin()) {
+            add_action('current_screen', [$this, 'init']);
+        }
     }
 
     public function init() {
-        if (!is_admin()) {
+        $screen = get_current_screen();
+        if (!$screen || !in_array($screen->base, ['edit', 'post'])) {
             return;
         }
 

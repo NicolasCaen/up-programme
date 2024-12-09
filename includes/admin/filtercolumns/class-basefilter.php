@@ -54,28 +54,29 @@ abstract class BaseFilter {
         if (!is_admin() || 
             $pagenow !== 'edit.php' || 
             !isset($query->query['post_type']) || 
-            $query->query['post_type'] != $this->post_type) {
-            return;
+            $query->query['post_type'] !== $this->post_type) {
+            return $query;
         }
 
         $tax_query = [];
 
         foreach ($this->taxonomies as $taxonomy) {
-            if (isset($_GET[$taxonomy]) && $_GET[$taxonomy] > 0) {
-                $term = get_term_by('id', $_GET[$taxonomy], $taxonomy);
-                if ($term) {
-                    $tax_query[] = [
-                        'taxonomy' => $taxonomy,
-                        'field' => 'slug',
-                        'terms' => $term->slug,
-                    ];
-                }
+            if (isset($_GET[$taxonomy]) && !empty($_GET[$taxonomy]) && $_GET[$taxonomy] != '-1') {
+                $tax_query[] = [
+                    'taxonomy' => $taxonomy,
+                    'field' => 'term_id',
+                    'terms' => $_GET[$taxonomy],
+                ];
             }
         }
 
         if (!empty($tax_query)) {
-            $tax_query['relation'] = 'AND';
-            $query->tax_query = $tax_query;
+            if (count($tax_query) > 1) {
+                $tax_query['relation'] = 'AND';
+            }
+            $query->set('tax_query', $tax_query);
         }
+
+        return $query;
     }
 }
