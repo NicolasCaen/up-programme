@@ -18,6 +18,7 @@ class Init {
             Meta\LotMeta::class,
             Meta\ProgramMeta::class,
             Admin\Admin::class,
+            Admin\FilterColumns::class,
   
         ];
     }

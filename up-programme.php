@@ -15,10 +15,11 @@ define('UP_PROGRAMME_VERSION', '1.0.0');
 define('UP_PROGRAMME_FILE', __FILE__);
 define('UP_PROGRAMME_PATH', plugin_dir_path(__FILE__));
 define('UP_PROGRAMME_URL', plugin_dir_url(__FILE__));
+define('UP_PROGRAMME_DEBUG', false);
 
 // Fonction de débogage
 function up_debug($message) {
-    if (WP_DEBUG === true) {
+    if (WP_DEBUG === true && UP_PROGRAMME_DEBUG === true) {
         error_log(print_r($message, true));
     }
 }
