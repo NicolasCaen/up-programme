@@ -32,7 +32,6 @@ class LandImport extends BaseImport {
         $plan = $data[$this->column_indices['plan']] ?? '';
         $import_id = $id;
 
-        error_log("Processing terrain - ID: $id, Title: $title, Import ID: $import_id");
 
         // Vérifier si un terrain existe déjà
         $query = new WP_Query([
@@ -55,7 +54,7 @@ class LandImport extends BaseImport {
                 'post_content' => $description,
             );
             wp_update_post($post_data);
-            error_log("Terrain existant mis à jour - Post ID: $post_id");
+
         } else {
             $post_data = array(
                 'post_title'    => wp_strip_all_tags($title),
@@ -64,58 +63,47 @@ class LandImport extends BaseImport {
                 'post_type'     => 'up_program_land',
             );
             $post_id = wp_insert_post($post_data);
-            error_log("Nouveau terrain créé - Post ID: $post_id");
         }
 
         if (!is_wp_error($post_id)) {
-            error_log("Mise à jour des métadonnées pour Post ID: $post_id");
+
             $this->update_post_metadata($post_id, $id, $ville_id, $archive, $plan, $import_id);
             
             if ($this->lots_csv) {
-                error_log("Traitement des lots pour Post ID: $post_id, Import ID: $import_id");
                 $this->process_lots_for_post($post_id, $import_id);
             }
             
             if ($this->files_csv) {
-                error_log("Traitement des fichiers pour Post ID: $post_id, Import ID: $import_id");
                 $this->process_files_for_post($post_id, $import_id);
             }
-        } else {
-            error_log("Erreur lors de la création/mise à jour du terrain - Title: $title");
-        }
+        } 
     }
 
     private function process_lots_for_post($post_id, $import_id) {
-        error_log("Début process_lots_for_post - Post ID: $post_id, Import ID: $import_id");
+   
         
         if (($handle = fopen($this->lots_csv, "r")) !== FALSE) {
             $header = fgetcsv($handle, 0, ";");
-            error_log("En-tête du fichier lots: " . print_r($header, true));
+
             $lots = [];
             
             // Trouver l'index de la colonne ID
             $id_index = array_search('id', array_map('strtolower', $header));
             if ($id_index === false) {
-                error_log("Colonne 'id' non trouvée dans l'en-tête. En-tête disponible : " . implode(', ', $header));
                 return;
             }
             
             while (($data = fgetcsv($handle, 0, ";")) !== FALSE) {
-                error_log("Ligne brute: " . print_r($data, true));
                 
                 if (count($data) !== count($header)) {
-                    error_log("Ligne ignorée - Nombre de colonnes incorrect");
                     continue;
                 }
                 
                 $row = array_combine($header, $data);
-                error_log("Données ligne après combine: " . print_r($row, true));
                 
                 $current_id = $data[$id_index];
-                error_log("Comparaison - ID ligne: '$current_id', Import ID: '$import_id'");
                 
                 if ($current_id != $import_id) {
-                    error_log("Lot ignoré - ID ne correspond pas");
                     continue;
                 }
                 
@@ -159,49 +147,41 @@ class LandImport extends BaseImport {
                     $lot['plan_terrain'] = $this->clean_url($row['plan']);
                 }
                 
-                error_log("Lot créé: " . print_r($lot, true));
                 $lots[] = $lot;
             }
             
             if (!empty($lots)) {
-                error_log("Mise à jour des lots pour Post ID $post_id - Nombre de lots: " . count($lots));
                 $result = update_field('field_675964deeb787', $lots, $post_id);
-                error_log("Résultat mise à jour lots: " . ($result ? "succès" : "échec"));
-            } else {
-                error_log("Aucun lot trouvé pour ce terrain");
-            }
+            } 
             
             fclose($handle);
         }
     }
 
     private function process_files_for_post($post_id, $import_id) {
-        error_log("Début process_files_for_post - Post ID: $post_id, Import ID: $import_id");
         
         if (($handle = fopen($this->files_csv, "r")) !== FALSE) {
             $header = fgetcsv($handle, 0, ";");
-            error_log("En-tête du fichier files: " . print_r($header, true));
             $files = [];
             
             while (($data = fgetcsv($handle, 0, ";")) !== FALSE) {
                 if (count($data) !== count($header)) {
-                    error_log("Ligne ignorée - Nombre de colonnes incorrect");
                     continue;
                 }
                 
                 $row = array_combine($header, $data);
-                error_log("Données ligne: " . print_r($row, true));
+
                 
                 if (($row['id'] ?? '') != $import_id) {
-                    error_log("Fichier ignoré - ID {$row['id']} ne correspond pas à import_id $import_id");
+
                     continue;
                 }
                 
-                $label = $this->convert_document_label($row['reglement_alt'] ?? $row['reglement'] ?? '');
+                $label = $row['label'] ?? $row['label'] ?? '10';
                 
                 $file = [
                     'label' => $label,
-                    'files' => isset($row['reglement']) && !empty($row['reglement']) ? $this->clean_url($row['reglement']) : ''
+                    'files' => isset($row['files']) && !empty($row['files']) ? $this->clean_url($row['files']) : ''
                 ];
                 
                 error_log("Fichier ajouté: " . print_r($file, true));
@@ -209,11 +189,7 @@ class LandImport extends BaseImport {
             }
             
             if (!empty($files)) {
-                error_log("Mise à jour des fichiers pour Post ID $post_id - Nombre de fichiers: " . count($files));
                 $result = update_field('field_6757eee2128ef', $files, $post_id);
-                error_log("Résultat mise à jour fichiers: " . ($result ? "succès" : "échec"));
-            } else {
-                error_log("Aucun fichier trouvé pour ce terrain");
             }
             
             fclose($handle);
@@ -234,14 +210,18 @@ class LandImport extends BaseImport {
     }
 
     private function convert_document_label($label) {
-        $labels = [
-            "Plan de masse général" => "Plan de masse général",
-            "Plan local d'urbanisme" => "Plan local d'urbanisme",
-            "Etude géotechnique" => "Etude géotechnique",
-            "Règlement du lotissement" => "Règlement du lotissement"
-        ];
+        // Si le label est vide ou non numérique, retourne la valeur par défaut
+        if (empty($label) || !is_numeric($label)) {
+            return "1"; // 1 = Plan de masse général par défaut
+        }
         
-        return $labels[$label] ?? "Plan de masse général";
+        // Vérifie si le nombre est entre 1 et 4
+        $label = intval($label);
+        if ($label >= 1 && $label <= 4) {
+            return (string)$label;
+        }
+        
+        return "1"; // Valeur par défaut
     }
 
     private function clean_url($url) {
