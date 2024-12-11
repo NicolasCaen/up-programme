@@ -4,8 +4,8 @@ namespace UpProgramme\PostTypes;
 class Land {
     public function register() {
         add_action('init', [$this, 'register_post_type']);
-        add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
-        add_action('save_post', [$this, 'save_meta']);
+        //add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
+        //add_action('save_post', [$this, 'save_meta']);
     }
 
     public function register_post_type() {
@@ -27,6 +27,7 @@ class Land {
             'supports' => ['title', 'editor', 'thumbnail'],
             'menu_position' => 6,
             'menu_icon' => 'dashicons-palmtree',
+            'show_in_rest' => true,
         ];
 
         register_post_type('up_program_land', $args);
