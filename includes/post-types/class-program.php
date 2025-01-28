@@ -4,9 +4,9 @@ namespace UpProgramme\PostTypes;
 class Program {
     public function register() {
         add_action('init', [$this, 'register_post_type']);
-        add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
-        add_action('save_post', [$this, 'save_meta']);
         add_action('post_edit_form_tag', [$this, 'update_edit_form']);
+      //  add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
+      //  add_action('save_post', [$this, 'save_meta']);
     }
 
     public function register_post_type() {
@@ -14,7 +14,7 @@ class Program {
             'name' => 'Programmes',
             'singular_name' => 'Programme Immobilier',
             'add_new' => 'Ajouter Nouveau',
-            'add_new_item' => 'Ajouter Nouveau Programme',
+            'add_new_item' => 'Nouveau',
             'edit_item' => 'Modifier Programme',
             'new_item' => 'Nouveau Programme',
             'view_item' => 'Voir Programme',
@@ -32,9 +32,9 @@ class Program {
             'labels' => $labels,
             'public' => true,
             'has_archive' => true,
-            'supports' => ['title', 'editor', 'thumbnail', 'excerpt'],
+            'supports' => ['title', 'editor', 'thumbnail', 'excerpt','revisions'],
             'menu_position' => 5,
-            'menu_icon' => 'dashicons-admin-home',
+            'menu_icon' => 'dashicons-admin-multisite',
             'rewrite' => ['slug' => 'neuf'],
             'show_in_rest' => true,
             'publicly_queryable' => true,

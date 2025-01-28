@@ -1,8 +1,10 @@
 <?php
 namespace UpProgramme\PostTypes;
 
-class Lot {
+class Parcel {
+    
     public function register() {
+           
         add_action('init', [$this, 'register_post_type']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_meta']);
@@ -12,49 +14,49 @@ class Lot {
     public function register_post_type() {
         $args = [
             'labels' => [
-                'name' => 'Lots',
-                'singular_name' => 'Lot',
+                'name' => 'Parcelles',
+                'singular_name' => 'Parcelle',
                 'add_new' => 'Ajouter',
-                'add_new_item' => 'Ajouter un Lot',
-                'edit_item' => 'Modifier Lot',
-                'new_item' => 'Nouveau Lot',
-                'view_item' => 'Voir Lot',
-                'search_items' => 'Rechercher Lots',
-                'not_found' => 'Aucun lot trouvé',
-                'not_found_in_trash' => 'Aucun lot trouvé dans la corbeille',
+                'add_new_item' => 'Ajouter une parcelle',
+                'edit_item' => 'Modifier parcelle',
+                'new_item' => 'Nouvelle parcelle',
+                'view_item' => 'Voir parcelle',
+                'search_items' => 'Rechercher parcelles',
+                'not_found' => 'Aucune parcelle trouvé',
+                'not_found_in_trash' => 'Aucune parcelle trouvé dans la corbeille',
             ],
             'public' => true,
             'has_archive' => true,
             'supports' => ['title',  'thumbnail', 'custom-fields'],
             'menu_position' => 7,
-            'menu_icon' => 'dashicons-admin-home',
+            'menu_icon' => 'dashicons-location-alt',
             'show_in_rest' => true,
         ];
 
-        register_post_type('up_program_lot', $args);
+        register_post_type('up_program_parcel', $args);
     }
 
     public function add_meta_boxes() {
+    
         add_meta_box(
-            'lot_details',
-            'Détails du Lot',
+            'parcel_details',
+            'Détails de la parcelle',
             [$this, 'render_meta_box'],
-            'up_program_lot',
+            'up_program_parcel',
             'normal',
             'high'
         );
     }
 
     public function render_meta_box($post) {
-        wp_nonce_field(basename(__FILE__), 'lot_nonce');
+ 
+        wp_nonce_field(basename(__FILE__), 'parcel_nonce');
         
         $surface = get_post_meta($post->ID, 'up_surface', true);
         $price = get_post_meta($post->ID,   'up_price', true);
-        $price55 = get_post_meta($post->ID, 'up_price55', true);
-        $price20 = get_post_meta($post->ID, 'up_price20', true);
-        $price10 = get_post_meta($post->ID, 'up_price10', true);
+
         $pdf_url = get_post_meta($post->ID, 'up_pdf_file', true);
-        $lot_number = get_post_meta($post->ID, 'up_lot_number', true);
+        $parcel_number = get_post_meta($post->ID, 'up_parcel_number', true);
         $origin_id = get_post_meta($post->ID, 'up_origin_id', true);
         ?>
          <div class="up-flex-row__container">
@@ -64,8 +66,8 @@ class Lot {
                 <input type="text" id="up_origin_id" name="up_origin_id" value="<?php echo esc_attr($origin_id); ?>" />
             </p>
         <p>
-            <label for="up_lot_number">Numéro de lot :</label>
-            <input type="text" id="up_lot_number" name="up_lot_number" value="<?php echo esc_attr($lot_number); ?>" />
+            <label for="up_parcel_number">Numéro de parcelles :</label>
+            <input type="text" id="up_parcel_number" name="up_parcel_number" value="<?php echo esc_attr($parcel_number); ?>" />
         </p>
 
         <p>
@@ -79,24 +81,20 @@ class Lot {
             <label for="up_price">Prix :</label>
             <input type="number" id="up_price" name="up_price" value="<?php echo esc_attr($price); ?>" />
         </p>
-
-        <p>
-            <label for="up_price55">Prix TVA 5.5% :</label>
-            <input type="number" id="up_price55" name="up_price55" value="<?php echo esc_attr($price55); ?>" />
-        </p>
-
-        <p>
-            <label for="up_price20">Prix TVA 20% :</label>
-            <input type="number" id="up_price20" name="up_price20" value="<?php echo esc_attr($price20); ?>" />
-        </p>
-
-        <p>
-            <label for="up_price10">Prix TVA 10% :</label>
-            <input type="number" id="up_price10" name="up_price10" value="<?php echo esc_attr($price10); ?>" />
-            </p>
         </div>
         <div class="up-flex-row">
         <p>
+            <?php
+            // Si pdf_url est un array, prendre le premier élément
+            if (is_array($pdf_url)) {
+                $pdf_url = $pdf_url[0];
+            }
+            
+            // Si c'est un ID, récupérer l'URL
+            if (is_numeric($pdf_url)) {
+                $pdf_url = wp_get_attachment_url($pdf_url);
+            }
+            ?>
             <label for="up_pdf_file">Fichier PDF :</label>
             <input type="file" id="up_pdf_file" name="up_pdf_file" accept=".pdf" />
             <?php if ($pdf_url) : ?>
@@ -113,14 +111,14 @@ class Lot {
     }
 
     public function save_meta($post_id) {
-        if (!isset($_POST['lot_nonce']) || !wp_verify_nonce($_POST['lot_nonce'], basename(__FILE__))) {
+        if (!isset($_POST['parcel_nonce']) || !wp_verify_nonce($_POST['parcel_nonce'], basename(__FILE__))) {
             return;
         }
 
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
         if (!current_user_can('edit_post', $post_id)) return;
 
-        $fields = ['surface', 'price', 'price55', 'price20', 'price10', 'program_id', 'lot_number', 'origin_id'];
+        $fields = ['surface', 'price', 'program_id', 'parcel_number', 'origin_id'];
         foreach ($fields as $field) {
             if (isset($_POST['up_' . $field])) {
                 update_post_meta(
@@ -177,9 +175,9 @@ class Lot {
     }
 
     public function custom_upload_dir($dirs) {
-        $dirs['subdir'] = '/lots';
-        $dirs['path'] = $dirs['basedir'] . '/lots';
-        $dirs['url'] = $dirs['baseurl'] . '/lots';
+        $dirs['subdir'] = '/parcelles';
+        $dirs['path'] = $dirs['basedir'] . '/parcels';
+        $dirs['url'] = $dirs['baseurl'] . '/parcels';
         return $dirs;
     }
 

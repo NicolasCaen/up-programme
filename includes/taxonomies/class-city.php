@@ -14,8 +14,24 @@ class City {
         $args = [
             'hierarchical' => true,
             'labels' => [
-                'name' => 'Villes',
-                // ... autres labels
+               'name' => 'Villes', // Nom général de la taxonomie
+                'singular_name' => 'Ville', // Nom au singulier
+                'menu_name' => 'Villes', // Nom dans le menu d'administration
+                'all_items' => 'Toutes les villes', // Texte pour afficher tous les termes
+                'edit_item' => 'Modifier la ville', // Texte pour modifier un terme
+                'view_item' => 'Voir la ville', // Texte pour voir un terme
+                'update_item' => 'Mettre à jour la ville', // Texte pour mettre à jour un terme
+                'add_new_item' => 'Ajouter une nouvelle ville', // Texte pour ajouter un nouveau terme
+                'new_item_name' => 'Nom de la nouvelle ville', // Texte pour le nom du nouveau terme
+                'parent_item' => 'Ville parente', // Texte pour le terme parent (si hiérarchique)
+                'parent_item_colon' => 'Ville parente :', // Texte pour le terme parent avec deux-points
+                'search_items' => 'Rechercher des villes', // Texte pour rechercher des termes
+                'popular_items' => 'Villes populaires', // Texte pour les termes populaires
+                'separate_items_with_commas' => 'Séparer les villes par des virgules', // Texte pour les taxonomies non hiérarchiques
+                'add_or_remove_items' => 'Ajouter ou supprimer des villes', // Texte pour ajouter ou supprimer des termes
+                'choose_from_most_used' => 'Choisir parmi les villes les plus utilisées', // Texte pour choisir parmi les termes les plus utilisés
+                'not_found' => 'Aucune ville trouvée', // Texte si aucun terme n'est trouvé
+                'back_to_items' => '← Retour aux villes', // Texte pour revenir à la liste des termes
             ],
             'show_ui' => true,
             'show_admin_column' => true,

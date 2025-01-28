@@ -38,7 +38,7 @@ class State {
             'show_in_rest' => true
         ];
 
-        register_taxonomy('up_program_taxonomy_state', ['up_program_lot'], $args);
+        register_taxonomy('up_program_taxonomy_state', ['up_program_lot','up_program_parcel'], $args);
     }
 
     public function register_default_terms() {

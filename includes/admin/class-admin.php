@@ -22,23 +22,13 @@ class Admin {
     public function add_admin_pages() {
         // Page principale
         add_menu_page(
-            'Programme Settings',
-            'Programme Settings',
+            'Imports',
+            'Imports',
             'manage_options',
             'programme-settings',
             [$this, 'render_settings_page'],
-            'dashicons-admin-multisite',
+            'dashicons-database-import',
             20
-        );
-
-        // Sous-pages
-        add_submenu_page(
-            'programme-settings',
-            'Importation Parcelles',
-            'Import Parcelles',
-            'manage_options',
-            'import-parcelles',
-            [$this, 'render_import_parcelles_page']
         );
 
         add_submenu_page(
@@ -50,6 +40,35 @@ class Admin {
             [$this, 'render_import_programmes_page']
         );
 
+
+        add_submenu_page(
+            'programme-settings',
+            'Importation Lots',
+            'Import Lots',
+            'manage_options',
+            'import-Lots',
+            [$this, 'render_import_lots_page']
+        );
+
+        // Ajouter une sous-page pour l'importation des villes
+        add_submenu_page(
+            'programme-settings',
+            'Importation Terrains',
+            'Import Terrains',
+            'manage_options',
+            'import-land',
+            [$this, 'render_import_land_page']
+        );
+        // Sous-pages
+        add_submenu_page(
+            'programme-settings',
+            'Importation Parcelles',
+            'Import Parcelles',
+            'manage_options',
+            'import-parcelles',
+            [$this, 'render_import_parcelles_page']
+        );
+
         // Ajouter une sous-page pour l'importation des villes
         add_submenu_page(
             'programme-settings',
@@ -59,15 +78,7 @@ class Admin {
             'import-villes',
             [$this, 'render_import_villes_page']
         );
-                // Ajouter une sous-page pour l'importation des villes
-        add_submenu_page(
-            'programme-settings',
-            'Importation terrains',
-            'Import terrains',
-            'manage_options',
-            'import-land',
-            [$this, 'render_import_land_page']
-        );
+
     }
 
     public function render_settings_page() {
@@ -79,6 +90,8 @@ class Admin {
             <ul>
                 <li><a href="<?php echo admin_url('admin.php?page=import-parcelles'); ?>">Importation des parcelles</a></li>
                 <li><a href="<?php echo admin_url('admin.php?page=import-programmes'); ?>">Importation des programmes</a></li>
+                <li><a href="<?php echo admin_url('admin.php?page=import-villes'); ?>">Importation des villes</a></li>
+                <li><a href="<?php echo admin_url('admin.php?page=import-land'); ?>">Importation des terrains</a></li>
             </ul>
         </div>
         <?php
@@ -90,6 +103,25 @@ class Admin {
             <h1>Importation de parcelles via CSV</h1>
             <form method="post" enctype="multipart/form-data">
                 <input type="file" name="csv_file" accept=".csv" required>
+                <p class="description">CSV contenant les Parcelles (id, programme, description, type, chambres, étage, prix, prix-55, prix-20, prix-10, surface, pdf, dispositif, état)</p>
+                <?php submit_button('Importer Parcelles'); ?>
+            </form>
+            <?php
+            if ($_SERVER['REQUEST_METHOD'] == 'POST' && !empty($_FILES['csv_file']['tmp_name'])) {
+                $file = $_FILES['csv_file']['tmp_name'];
+                $this->process_csv($file, 'parcels');
+            }
+            ?>
+        </div>
+        <?php
+    }
+    public function render_import_lots_page() {
+        ?>
+        <div class="wrap">
+            <h1>Importation de lots via CSV</h1>
+            <form method="post" enctype="multipart/form-data">
+                <input type="file" name="csv_file" accept=".csv" required>
+                <p class="description">CSV contenant les Lots (id, programme, description, type, chambres, étage, prix, prix-55, prix-20, prix-10, surface, pdf, dispositif, état)</p>
                 <?php submit_button('Importer Parcelles'); ?>
             </form>
             <?php
@@ -101,13 +133,13 @@ class Admin {
         </div>
         <?php
     }
-
     public function render_import_programmes_page() {
         ?>
         <div class="wrap">
             <h1>Importation de programmes via CSV</h1>
             <form method="post" enctype="multipart/form-data">
                 <input type="file" name="csv_file" accept=".csv" required>
+                <p class="description">CSV contenant les programmes (slogan, type, rooms, nom_programme, dispositif, id, title, description, ville)</p>
                 <?php submit_button('Importer Programmes'); ?>
             </form>
             <?php
@@ -198,6 +230,7 @@ class Admin {
             <h1>Importation de villes via CSV</h1>
             <form method="post" enctype="multipart/form-data">
                 <input type="file" name="csv_file" accept=".csv" required>
+                <p class="description">CSV contenant les villes (id, ville, identifiant)</p>
                 <?php submit_button('Importer Villes'); ?>
             </form>
             <?php
@@ -221,6 +254,9 @@ class Admin {
             case 'lots':
                 $importer = new imports\LotImport($file);
                 break;
+            case 'parcels':
+                $importer = new imports\ParcelImport($file);
+                break;
             case 'lands':
                 $importer = new imports\LandImport($file);
                 break;
@@ -228,6 +264,6 @@ class Admin {
                 return;
         }
         
-        $importer->process();
+        $importer->process($file);
     }
 } 
